@@ -6,6 +6,7 @@
   <title>Converter</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/svg2pdf.js@2.2.1/dist/svg2pdf.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -699,16 +700,28 @@
         let dataUrl, pageW, pageH;
 
         if (inputType === 'svg') {
-          const { widthPt, heightPt, widthPx, heightPx } = parseSvgDimensions(file.content);
-          const canvas = await svgToCanvas(file.content, widthPx, heightPx);
-          dataUrl = canvas.toDataURL('image/png');
+          const { widthPt, heightPt } = parseSvgDimensions(file.content);
 
           if (i === 0) {
             pdf = new jsPDF({ orientation: widthPt > heightPt ? 'l' : 'p', unit: 'pt', format: [widthPt, heightPt] });
           } else {
             pdf.addPage([widthPt, heightPt], widthPt > heightPt ? 'l' : 'p');
           }
-          pdf.addImage(dataUrl, 'PNG', 0, 0, widthPt, heightPt);
+
+          // Parse SVG and embed as vector via svg2pdf.js
+          const svgDoc = new DOMParser().parseFromString(file.content, 'image/svg+xml');
+          const svgEl = svgDoc.querySelector('svg');
+          svgEl.setAttribute('width', widthPt);
+          svgEl.setAttribute('height', heightPt);
+          // Must be briefly in DOM for svg2pdf to resolve styles/layout
+          svgEl.style.cssText = 'position:absolute;left:-99999px;visibility:hidden;';
+          document.body.appendChild(svgEl);
+          try {
+            const fn = typeof svg2pdf === 'function' ? svg2pdf : svg2pdf.svg2pdf;
+            await fn(svgEl, pdf, { x: 0, y: 0, width: widthPt, height: heightPt });
+          } finally {
+            document.body.removeChild(svgEl);
+          }
 
         } else {
           // PNG / JPG → fit to A4
