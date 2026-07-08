@@ -55,6 +55,7 @@
       align-items: center;
       gap: 16px;
       box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      flex-wrap: wrap;
     }
     #outputSelector label.heading {
       font-size: 0.85rem;
@@ -124,16 +125,31 @@
     .file-item.drag-over { box-shadow: 0 0 0 2px #0071e3; }
 
     .drag-handle {
-      color: #d1d1d6;
       cursor: grab;
       padding: 4px 2px;
       flex-shrink: 0;
-      font-size: 1rem;
-      line-height: 1;
-      transition: color 0.15s;
+      display: flex;
+      align-items: center;
+      opacity: 0.3;
+      transition: opacity 0.15s;
     }
-    .drag-handle:hover { color: #8e8e93; }
+    .drag-handle:hover { opacity: 0.7; }
     .drag-handle:active { cursor: grabbing; }
+
+    #sortBtn {
+      margin-left: auto;
+      font-size: 0.82rem;
+      padding: 5px 12px;
+      border-radius: 8px;
+      border: 1.5px solid #d1d1d6;
+      background: #fff;
+      cursor: pointer;
+      color: #3a3a3c;
+      font-weight: 500;
+      transition: background 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+    #sortBtn:hover { background: #f5f5f7; border-color: #aeaeb2; }
 
     .file-thumb {
       width: 48px;
@@ -256,6 +272,7 @@
     <div id="outputSelector">
       <label class="heading">出力形式</label>
       <div class="radio-group" id="radioGroup"></div>
+      <button id="sortBtn">名前順 ↑</button>
     </div>
 
     <div id="fileList"></div>
@@ -304,6 +321,7 @@
     const fileInput = document.getElementById('fileInput');
     const outputSelector = document.getElementById('outputSelector');
     const radioGroup = document.getElementById('radioGroup');
+    const sortBtn = document.getElementById('sortBtn');
     const fileList = document.getElementById('fileList');
     const convertBtn = document.getElementById('convertBtn');
     const clearBtn = document.getElementById('clearBtn');
@@ -313,6 +331,16 @@
     const dropSubText = document.getElementById('dropSubText');
     const selectLink = document.getElementById('selectLink');
     const toast = document.getElementById('toast');
+
+    sortBtn.addEventListener('click', () => {
+      files.sort((a, b) => {
+        const cmp = a.name.localeCompare(b.name, 'ja', { sensitivity: 'base', numeric: true });
+        return sortAsc ? cmp : -cmp;
+      });
+      sortAsc = !sortAsc;
+      sortBtn.textContent = `名前順 ${sortAsc ? '↑' : '↓'}`;
+      render();
+    });
 
     function showToast(msg) {
       toast.textContent = msg;
@@ -378,9 +406,11 @@
     function renderOutputSelector() {
       if (!lockedType) {
         outputSelector.style.display = 'none';
+        sortBtn.style.display = 'none';
         return;
       }
       outputSelector.style.display = 'flex';
+      sortBtn.style.display = '';
       radioGroup.innerHTML = '';
       OUTPUT_MAP[lockedType].forEach(fmt => {
         const lbl = document.createElement('label');
@@ -414,31 +444,19 @@
       // File list
       fileList.innerHTML = '';
 
-      if (hasFiles) {
-        const header = document.createElement('div');
-        header.className = 'list-header';
-        header.innerHTML = `
-          <span class="list-count">${files.length}ファイル</span>
-          <button class="sort-btn" id="sortBtn">名前順 ${sortAsc ? '↑ A→Z' : '↓ Z→A'}</button>
-        `;
-        header.querySelector('#sortBtn').addEventListener('click', () => {
-          files.sort((a, b) => {
-            const cmp = a.name.localeCompare(b.name, 'ja', { sensitivity: 'base' });
-            return sortAsc ? cmp : -cmp;
-          });
-          sortAsc = !sortAsc;
-          render();
-        });
-        fileList.appendChild(header);
-      }
-
       files.forEach((file, index) => {
         const item = document.createElement('div');
         item.className = 'file-item';
         item.dataset.id = file.id;
 
         item.innerHTML = `
-          <span class="drag-handle" title="ドラッグして並び替え">⠿</span>
+          <span class="drag-handle" title="ドラッグして並び替え">
+            <svg width="12" height="18" viewBox="0 0 12 18" fill="currentColor">
+              <circle cx="3" cy="3" r="1.5"/><circle cx="9" cy="3" r="1.5"/>
+              <circle cx="3" cy="9" r="1.5"/><circle cx="9" cy="9" r="1.5"/>
+              <circle cx="3" cy="15" r="1.5"/><circle cx="9" cy="15" r="1.5"/>
+            </svg>
+          </span>
           <div class="file-thumb">
             <img src="${file.blobUrl}" alt="">
           </div>
