@@ -7,6 +7,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/svg2pdf.js@2.2.1/dist/svg2pdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -205,6 +206,7 @@
     .type-badge.svg { background: #fff3e0; color: #e65100; }
     .type-badge.png { background: #e8f5e9; color: #2e7d32; }
     .type-badge.jpg { background: #e3f2fd; color: #1565c0; }
+    .type-badge.pdf { background: #fce4ec; color: #c62828; }
 
     /* Actions */
     .actions { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; }
@@ -267,14 +269,14 @@
 <body>
   <div class="container">
     <h1>Converter</h1>
-    <p class="subtitle">SVG・PNG・JPGをドラッグして変換。ドラッグで順序を変更できます。</p>
+    <p class="subtitle">SVG・PNG・JPG・PDFをドラッグして変換。ドラッグで順序を変更できます。</p>
 
     <div id="dropzone">
       <div class="icon">📂</div>
       <p class="main-text"><strong id="selectLink">ファイルを選択</strong>　またはここにドロップ</p>
       <p class="sub-text" id="dropSubText">SVG・PNG・JPG に対応</p>
     </div>
-    <input type="file" id="fileInput" accept=".svg,.png,.jpg,.jpeg,image/svg+xml,image/png,image/jpeg" multiple>
+    <input type="file" id="fileInput" accept=".svg,.png,.jpg,.jpeg,.pdf,image/svg+xml,image/png,image/jpeg,application/pdf" multiple>
 
     <div id="outputSelector">
       <label class="heading">出力形式</label>
@@ -298,25 +300,31 @@
   </div>
 
   <div id="toast"></div>
-  <div id="build-time">built 2026-07-09 17:30 JST</div>
+  <div id="build-time">built 2026-07-09 18:30 JST</div>
 
   <script>
     const { jsPDF } = window.jspdf;
+
+    // PDF.js worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
     // Output options per input type (first item = default)
     const OUTPUT_MAP = {
       svg: ['PNG', 'PDF'],
       png: ['JPG', 'PDF'],
       jpg: ['PNG', 'PDF'],
+      pdf: ['PNG', 'JPG'],
     };
 
     const TYPE_ACCEPT = {
       svg: '.svg,image/svg+xml',
       png: '.png,image/png',
       jpg: '.jpg,.jpeg,image/jpeg',
+      pdf: '.pdf,application/pdf',
     };
 
-    const TYPE_LABEL = { svg: 'SVG', png: 'PNG', jpg: 'JPG' };
+    const TYPE_LABEL = { svg: 'SVG', png: 'PNG', jpg: 'JPG', pdf: 'PDF' };
 
     let files = [];
     let lockedType = null;
@@ -362,6 +370,7 @@
       if (ext === 'svg' || mime === 'image/svg+xml') return 'svg';
       if (ext === 'png' || mime === 'image/png') return 'png';
       if (ext === 'jpg' || ext === 'jpeg' || mime === 'image/jpeg') return 'jpg';
+      if (ext === 'pdf' || mime === 'application/pdf') return 'pdf';
       return null;
     }
 
@@ -379,8 +388,39 @@
       return { dataUrl, blobUrl: dataUrl };
     }
 
+    // PDF → ページごとのアイテムに展開
+    async function readPdfPages(file) {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const items = [];
+
+      for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+        const page = await pdfDoc.getPage(pageNum);
+        // サムネイル生成（長辺 120px）
+        const vp = page.getViewport({ scale: 1 });
+        const thumbScale = 120 / Math.max(vp.width, vp.height);
+        const thumbVp = page.getViewport({ scale: thumbScale });
+        const thumbCanvas = document.createElement('canvas');
+        thumbCanvas.width  = Math.round(thumbVp.width);
+        thumbCanvas.height = Math.round(thumbVp.height);
+        await page.render({ canvasContext: thumbCanvas.getContext('2d'), viewport: thumbVp }).promise;
+        const thumbUrl = thumbCanvas.toDataURL('image/jpeg', 0.8);
+        thumbCanvas.width = 0; thumbCanvas.height = 0;
+
+        items.push({
+          id: idCounter++,
+          name: `${file.name}  P.${pageNum}`,
+          size: Math.round(file.size / pdfDoc.numPages),
+          type: 'pdf',
+          arrayBuffer,   // 同一PDFのページ間で共有
+          pageNum,
+          blobUrl: thumbUrl,
+        });
+      }
+      return items;
+    }
+
     async function addFiles(rawFiles) {
-      const valid = [];
       let skipped = 0;
 
       for (const f of rawFiles) {
@@ -392,12 +432,17 @@
           selectedOutput = OUTPUT_MAP[t][0];
           updateFileInput();
         }
-        valid.push({ file: f, type: t });
-      }
 
-      for (const { file, type } of valid) {
-        const data = await readFileData(file, type);
-        files.push({ id: idCounter++, name: file.name, size: file.size, type, ...data });
+        if (t === 'pdf') {
+          progressLabel.textContent = `${f.name} を読み込み中...`;
+          progress.style.display = 'block';
+          const pages = await readPdfPages(f);
+          files.push(...pages);
+          progress.style.display = 'none';
+        } else {
+          const data = await readFileData(f, t);
+          files.push({ id: idCounter++, name: f.name, size: f.size, type: t, ...data });
+        }
       }
 
       if (skipped > 0) {
@@ -662,6 +707,22 @@
       return canvas;
     }
 
+    async function pdfPageToCanvas(file, outputMime) {
+      const pdfDoc = await pdfjsLib.getDocument({ data: file.arrayBuffer }).promise;
+      const page = await pdfDoc.getPage(file.pageNum);
+      const vp = page.getViewport({ scale: 2 }); // 2x ≈ 144DPI
+      const canvas = document.createElement('canvas');
+      canvas.width  = Math.round(vp.width);
+      canvas.height = Math.round(vp.height);
+      const ctx = canvas.getContext('2d');
+      if (outputMime === 'image/jpeg') {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+      await page.render({ canvasContext: ctx, viewport: vp }).promise;
+      return canvas;
+    }
+
     async function imageUrlToCanvas(src, outputMime) {
       const img = new Image();
       await new Promise((resolve, reject) => {
@@ -815,6 +876,8 @@
         if (inputType === 'svg') {
           const { widthPx, heightPx } = parseSvgDimensions(file.content);
           canvas = await svgToCanvas(file.content, widthPx, heightPx);
+        } else if (inputType === 'pdf') {
+          canvas = await pdfPageToCanvas(file, mime);
         } else {
           canvas = await imageUrlToCanvas(file.blobUrl, mime);
         }
