@@ -559,33 +559,55 @@
 
     // ─── Conversion helpers ───────────────────────────────────────
 
-    function getSvgDimensions(svgContent) {
+    // Returns widthPt/heightPt (for PDF page size) and widthPx/heightPx (for canvas rendering)
+    function parseSvgDimensions(svgContent) {
       const doc = new DOMParser().parseFromString(svgContent, 'image/svg+xml');
       const svg = doc.querySelector('svg');
-      if (!svg) return { width: 800, height: 600 };
-      let w = parseFloat(svg.getAttribute('width'));
-      let h = parseFloat(svg.getAttribute('height'));
-      if (!w || !h) {
-        const vb = svg.getAttribute('viewBox');
-        if (vb) {
-          const p = vb.trim().split(/[\s,]+/);
-          w = parseFloat(p[2]); h = parseFloat(p[3]);
-        }
+      if (!svg) return { widthPt: 595.28, heightPt: 841.89, widthPx: 794, heightPx: 1123 };
+
+      const vb = svg.getAttribute('viewBox') || '';
+      let vbW = 0, vbH = 0;
+      if (vb) {
+        const p = vb.trim().split(/[\s,]+/);
+        vbW = parseFloat(p[2]) || 0;
+        vbH = parseFloat(p[3]) || 0;
       }
-      return (w && h) ? { width: w, height: h } : { width: 800, height: 600 };
+
+      // Convert SVG attribute with unit to PDF points (72pt = 1in)
+      function toPt(attr, fallbackPx) {
+        const n = parseFloat(attr);
+        if (!attr || !n || n <= 0) return fallbackPx * 0.75;
+        if (/mm/.test(attr)) return n * 72 / 25.4;
+        if (/cm/.test(attr)) return n * 72 / 2.54;
+        if (/in/.test(attr)) return n * 72;
+        if (/pt/.test(attr)) return n;
+        if (/pc/.test(attr)) return n * 12;
+        return n * 0.75; // px / unitless → 96dpi → pt
+      }
+
+      const widthPt  = toPt(svg.getAttribute('width'),  vbW || 794);
+      const heightPt = toPt(svg.getAttribute('height'), vbH || 1123);
+      // Use viewBox for pixel canvas dimensions (correct aspect ratio)
+      const widthPx  = vbW  || widthPt  / 0.75;
+      const heightPx = vbH  || heightPt / 0.75;
+
+      return { widthPt, heightPt, widthPx, heightPx };
     }
 
-    async function svgToCanvas(svgContent, width, height, scale = 2) {
+    async function svgToCanvas(svgContent, widthPx, heightPx, scale = 4) {
+      // Cap canvas to avoid OOM on huge SVGs
+      const MAX_PX = 9000;
+      const s = Math.min(scale, MAX_PX / Math.max(widthPx, heightPx));
       const canvas = document.createElement('canvas');
-      canvas.width = width * scale;
-      canvas.height = height * scale;
+      canvas.width  = Math.round(widthPx  * s);
+      canvas.height = Math.round(heightPx * s);
       const ctx = canvas.getContext('2d');
-      ctx.scale(scale, scale);
+      ctx.scale(s, s);
       const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       await new Promise((resolve, reject) => {
         const img = new Image();
-        img.onload = () => { ctx.drawImage(img, 0, 0, width, height); resolve(); };
+        img.onload = () => { ctx.drawImage(img, 0, 0, widthPx, heightPx); resolve(); };
         img.onerror = reject;
         img.src = url;
       });
@@ -677,17 +699,16 @@
         let dataUrl, pageW, pageH;
 
         if (inputType === 'svg') {
-          const { width, height } = getSvgDimensions(file.content);
-          const canvas = await svgToCanvas(file.content, width, height);
+          const { widthPt, heightPt, widthPx, heightPx } = parseSvgDimensions(file.content);
+          const canvas = await svgToCanvas(file.content, widthPx, heightPx);
           dataUrl = canvas.toDataURL('image/png');
-          pageW = width; pageH = height;
 
           if (i === 0) {
-            pdf = new jsPDF({ orientation: width > height ? 'l' : 'p', unit: 'pt', format: [width, height] });
+            pdf = new jsPDF({ orientation: widthPt > heightPt ? 'l' : 'p', unit: 'pt', format: [widthPt, heightPt] });
           } else {
-            pdf.addPage([width, height], width > height ? 'l' : 'p');
+            pdf.addPage([widthPt, heightPt], widthPt > heightPt ? 'l' : 'p');
           }
-          pdf.addImage(dataUrl, 'PNG', 0, 0, pageW, pageH);
+          pdf.addImage(dataUrl, 'PNG', 0, 0, widthPt, heightPt);
 
         } else {
           // PNG / JPG → fit to A4
@@ -726,8 +747,8 @@
 
         let canvas;
         if (inputType === 'svg') {
-          const { width, height } = getSvgDimensions(file.content);
-          canvas = await svgToCanvas(file.content, width, height);
+          const { widthPx, heightPx } = parseSvgDimensions(file.content);
+          canvas = await svgToCanvas(file.content, widthPx, heightPx);
         } else {
           canvas = await imageUrlToCanvas(file.blobUrl, mime);
         }
