@@ -87,6 +87,27 @@
     /* File list */
     #fileList { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
 
+    .list-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+      padding: 0 2px;
+    }
+    .list-count { font-size: 0.85rem; color: #6e6e73; }
+    .sort-btn {
+      font-size: 0.82rem;
+      padding: 5px 12px;
+      border-radius: 8px;
+      border: 1.5px solid #d1d1d6;
+      background: #fff;
+      cursor: pointer;
+      color: #3a3a3c;
+      font-weight: 500;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .sort-btn:hover { background: #f5f5f7; border-color: #aeaeb2; }
+
     .file-item {
       background: #fff;
       border-radius: 12px;
@@ -95,13 +116,24 @@
       align-items: center;
       gap: 14px;
       box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-      cursor: grab;
+      cursor: default;
       user-select: none;
       transition: box-shadow 0.15s, opacity 0.15s;
     }
-    .file-item:active { cursor: grabbing; }
     .file-item.dragging { opacity: 0.4; }
     .file-item.drag-over { box-shadow: 0 0 0 2px #0071e3; }
+
+    .drag-handle {
+      color: #d1d1d6;
+      cursor: grab;
+      padding: 4px 2px;
+      flex-shrink: 0;
+      font-size: 1rem;
+      line-height: 1;
+      transition: color 0.15s;
+    }
+    .drag-handle:hover { color: #8e8e93; }
+    .drag-handle:active { cursor: grabbing; }
 
     .file-thumb {
       width: 48px;
@@ -266,6 +298,7 @@
     let selectedOutput = null;
     let idCounter = 0;
     let dragSrcId = null;
+    let sortAsc = true;
 
     const dropzone = document.getElementById('dropzone');
     const fileInput = document.getElementById('fileInput');
@@ -380,13 +413,32 @@
 
       // File list
       fileList.innerHTML = '';
+
+      if (hasFiles) {
+        const header = document.createElement('div');
+        header.className = 'list-header';
+        header.innerHTML = `
+          <span class="list-count">${files.length}ファイル</span>
+          <button class="sort-btn" id="sortBtn">名前順 ${sortAsc ? '↑ A→Z' : '↓ Z→A'}</button>
+        `;
+        header.querySelector('#sortBtn').addEventListener('click', () => {
+          files.sort((a, b) => {
+            const cmp = a.name.localeCompare(b.name, 'ja', { sensitivity: 'base' });
+            return sortAsc ? cmp : -cmp;
+          });
+          sortAsc = !sortAsc;
+          render();
+        });
+        fileList.appendChild(header);
+      }
+
       files.forEach((file, index) => {
         const item = document.createElement('div');
         item.className = 'file-item';
-        item.draggable = true;
         item.dataset.id = file.id;
 
         item.innerHTML = `
+          <span class="drag-handle" title="ドラッグして並び替え">⠿</span>
           <div class="file-thumb">
             <img src="${file.blobUrl}" alt="">
           </div>
@@ -418,15 +470,26 @@
       clearBtn.disabled = !hasFiles;
     }
 
-    // Drag-to-reorder
+    // Drag-to-reorder (handle-activated)
     function setupDrag(item) {
+      const handle = item.querySelector('.drag-handle');
+
+      handle.addEventListener('pointerdown', () => { item.draggable = true; });
+      document.addEventListener('pointerup', () => { item.draggable = false; }, { passive: true });
+
       item.addEventListener('dragstart', e => {
+        if (!item.draggable) { e.preventDefault(); return; }
         dragSrcId = parseInt(item.dataset.id);
         item.classList.add('dragging');
         e.dataTransfer.effectAllowed = 'move';
       });
-      item.addEventListener('dragend', () => item.classList.remove('dragging'));
+      item.addEventListener('dragend', () => {
+        item.draggable = false;
+        item.classList.remove('dragging');
+        dragSrcId = null;
+      });
       item.addEventListener('dragover', e => {
+        if (dragSrcId === null) return;
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
         document.querySelectorAll('.file-item').forEach(el => el.classList.remove('drag-over'));
@@ -437,7 +500,7 @@
         e.preventDefault();
         item.classList.remove('drag-over');
         const targetId = parseInt(item.dataset.id);
-        if (dragSrcId === targetId) return;
+        if (dragSrcId === null || dragSrcId === targetId) return;
         const si = files.findIndex(f => f.id === dragSrcId);
         const ti = files.findIndex(f => f.id === targetId);
         const [moved] = files.splice(si, 1);
@@ -447,7 +510,11 @@
     }
 
     // Drop zone events
-    dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('hover'); });
+    dropzone.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (dragSrcId !== null) return; // internal reorder drag — skip hover
+      dropzone.classList.add('hover');
+    });
     dropzone.addEventListener('dragleave', () => dropzone.classList.remove('hover'));
     dropzone.addEventListener('drop', async e => {
       e.preventDefault();
