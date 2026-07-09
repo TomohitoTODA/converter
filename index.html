@@ -300,7 +300,7 @@
   </div>
 
   <div id="toast"></div>
-  <div id="build-time">built 2026-07-09 19:00 JST</div>
+  <div id="build-time">built 2026-07-09 19:10 JST</div>
 
   <script>
     const { jsPDF } = window.jspdf;
@@ -829,7 +829,7 @@
             svgEl.style.cssText = 'position:absolute;left:-99999px;top:0;';
             document.body.appendChild(svgEl);
             try {
-              await svg2pdf(svgEl, pdf, { x: 0, y: 0, width: widthPt, height: heightPt });
+              await svg2pdf.svg2pdf(svgEl, pdf, { x: 0, y: 0, width: widthPt, height: heightPt });
             } finally {
               document.body.removeChild(svgEl);
             }
