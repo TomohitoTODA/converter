@@ -300,7 +300,7 @@
   </div>
 
   <div id="toast"></div>
-  <div id="build-time">built 2026-07-09 18:30 JST</div>
+  <div id="build-time">built 2026-07-09 18:45 JST</div>
 
   <script>
     const { jsPDF } = window.jspdf;
@@ -391,7 +391,7 @@
     // PDF → ページごとのアイテムに展開
     async function readPdfPages(file) {
       const arrayBuffer = await file.arrayBuffer();
-      const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer.slice(0) }).promise;
       const items = [];
 
       for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
@@ -708,7 +708,7 @@
     }
 
     async function pdfPageToCanvas(file, outputMime) {
-      const pdfDoc = await pdfjsLib.getDocument({ data: file.arrayBuffer }).promise;
+      const pdfDoc = await pdfjsLib.getDocument({ data: file.arrayBuffer.slice(0) }).promise;
       const page = await pdfDoc.getPage(file.pageNum);
       const vp = page.getViewport({ scale: 2 }); // 2x ≈ 144DPI
       const canvas = document.createElement('canvas');
