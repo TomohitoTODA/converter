@@ -334,6 +334,148 @@
     .org-page-num { font-size: 0.72rem; color: #6e6e73; font-weight: 500; }
     .org-progress { margin-top: 14px; }
 
+    /* ── Compress mode ───────────────────────────────────────────── */
+    #cmpDropzone {
+      border: 2px dashed #c7c7cc;
+      border-radius: 16px;
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      background: #fff;
+      margin-bottom: 20px;
+    }
+    #cmpDropzone.hover { border-color: #0071e3; background: #f0f6ff; }
+    #cmpDropzone .icon { font-size: 2.2rem; margin-bottom: 12px; }
+    #cmpDropzone .main-text { font-size: 0.95rem; color: #3a3a3c; margin-bottom: 6px; }
+    #cmpDropzone .main-text strong { color: #0071e3; }
+    #cmpDropzone .sub-text { font-size: 0.82rem; color: #8e8e93; }
+    #cmpFileInput { display: none; }
+
+    .cmp-options-row {
+      background: #fff;
+      border-radius: 12px;
+      padding: 14px 20px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      flex-wrap: wrap;
+    }
+    .quality-slider { flex: 1; min-width: 100px; accent-color: #0071e3; cursor: pointer; }
+    .quality-value { font-size: 0.9rem; font-weight: 600; min-width: 42px; text-align: right; }
+
+    #cmpBtn {
+      flex: 1; padding: 14px;
+      background: #34c759; color: #fff;
+      border: none; border-radius: 12px;
+      font-size: 1rem; font-weight: 600;
+      cursor: pointer; transition: background 0.15s;
+    }
+    #cmpBtn:hover:not(:disabled) { background: #30b350; }
+    #cmpBtn:disabled { background: #c7c7cc; cursor: not-allowed; }
+
+    #cmpClearBtn {
+      padding: 14px 20px;
+      background: #fff; color: #ff3b30;
+      border: 1.5px solid #ffd7d5; border-radius: 12px;
+      font-size: 0.95rem; font-weight: 500;
+      cursor: pointer; transition: background 0.15s;
+      white-space: nowrap;
+    }
+    #cmpClearBtn:hover:not(:disabled) { background: #fff0ef; }
+    #cmpClearBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── 4in1 mode ─────────────────────────────────────────────── */
+    #nupDropzone {
+      border: 2px dashed #c7c7cc;
+      border-radius: 16px;
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      background: #fff;
+      margin-bottom: 20px;
+    }
+    #nupDropzone.hover { border-color: #0071e3; background: #f0f6ff; }
+    #nupDropzone .icon { font-size: 2.2rem; margin-bottom: 12px; }
+    #nupDropzone .main-text { font-size: 0.95rem; color: #3a3a3c; margin-bottom: 6px; }
+    #nupDropzone .main-text strong { color: #0071e3; }
+    #nupDropzone .sub-text { font-size: 0.82rem; color: #8e8e93; }
+    #nupFileInput { display: none; }
+
+    #nupStatus {
+      font-size: 0.88rem; color: #6e6e73;
+      margin-bottom: 16px; text-align: center;
+    }
+
+    #nupPreviewGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .nup-output-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    .nup-2x2-grid {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 2px;
+      background: #e5e5ea;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .nup-cell {
+      background: #f5f5f7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      min-width: 0;
+      min-height: 0;
+    }
+    .nup-cell img {
+      width: 100%; height: 100%;
+      object-fit: contain; display: block;
+    }
+    .nup-cell.empty { background: #ebebf0; }
+
+    .nup-page-label {
+      font-size: 0.72rem; color: #6e6e73;
+      text-align: center; margin-top: 6px; font-weight: 500;
+    }
+
+    #nupBtn {
+      flex: 1; padding: 14px;
+      background: #0071e3; color: #fff;
+      border: none; border-radius: 12px;
+      font-size: 1rem; font-weight: 600;
+      cursor: pointer; transition: background 0.15s;
+    }
+    #nupBtn:hover:not(:disabled) { background: #0077ed; }
+    #nupBtn:disabled { background: #c7c7cc; cursor: not-allowed; }
+
+    #nupClearBtn {
+      padding: 14px 20px;
+      background: #fff; color: #ff3b30;
+      border: 1.5px solid #ffd7d5; border-radius: 12px;
+      font-size: 0.95rem; font-weight: 500;
+      cursor: pointer; transition: background 0.15s;
+      white-space: nowrap;
+    }
+    #nupClearBtn:hover:not(:disabled) { background: #fff0ef; }
+    #nupClearBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
     /* ── Toast ───────────────────────────────────────────────────── */
     #toast {
       position: fixed; bottom: 32px; left: 50%;
@@ -355,6 +497,8 @@
     <div class="mode-tabs">
       <button class="mode-tab active" id="tabConvert">変換</button>
       <button class="mode-tab" id="tabOrganize">整理・編集</button>
+      <button class="mode-tab" id="tabCompress">圧縮</button>
+      <button class="mode-tab" id="tabNup">まとめる</button>
     </div>
 
     <!-- ── Convert panel ─────────────────────────────────────────── -->
@@ -415,10 +559,98 @@
         </div>
       </div>
     </div>
+
+    <!-- ── Compress panel ────────────────────────────────────────── -->
+    <div id="compressPanel" style="display:none">
+      <div id="cmpDropzone">
+        <div class="icon">🗜️</div>
+        <p class="main-text"><strong id="cmpSelectLink">ファイルを選択</strong>　またはここにドロップ</p>
+        <p class="sub-text">PNG・JPG に対応</p>
+      </div>
+      <input type="file" id="cmpFileInput" accept=".png,.jpg,.jpeg,image/png,image/jpeg" multiple>
+
+      <div id="cmpOptions" style="display:none">
+        <div class="cmp-options-row">
+          <label class="heading">出力形式</label>
+          <div class="radio-group" id="cmpFormatGroup">
+            <label class="selected" data-fmt="jpg">
+              <input type="radio" name="cmpFormat" value="jpg" checked><span>JPEG</span>
+            </label>
+            <label data-fmt="webp">
+              <input type="radio" name="cmpFormat" value="webp"><span>WebP</span>
+            </label>
+          </div>
+        </div>
+        <div class="cmp-options-row">
+          <label class="heading" for="cmpQuality">品質</label>
+          <input type="range" id="cmpQuality" class="quality-slider" min="10" max="100" value="80" step="5">
+          <span id="cmpQualityVal" class="quality-value">80%</span>
+        </div>
+      </div>
+
+      <div id="cmpFileList"></div>
+
+      <div class="actions">
+        <button id="cmpBtn" disabled>圧縮する</button>
+        <button id="cmpClearBtn" disabled>すべて削除</button>
+      </div>
+
+      <div id="cmpProgress" style="display:none">
+        <p class="progress-label" id="cmpProgressLabel">圧縮中...</p>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar" id="cmpProgressBar"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 4in1 panel ────────────────────────────────────────── -->
+    <div id="nupPanel" style="display:none">
+      <div id="nupDropzone">
+        <div class="icon">📋</div>
+        <p class="main-text"><strong id="nupSelectLink">PDFを選択</strong>　またはここにドロップ</p>
+        <p class="sub-text">複数PDFをまとめて処理できます</p>
+      </div>
+      <input type="file" id="nupFileInput" accept=".pdf,application/pdf" multiple>
+
+      <div id="nupOptions" style="display:none">
+        <div class="cmp-options-row">
+          <label class="heading">出力サイズ</label>
+          <div class="radio-group" id="nupSizeGroup">
+            <label class="selected" data-size="a4">
+              <input type="radio" name="nupSize" value="a4" checked><span>A4縦</span>
+            </label>
+            <label data-size="a4l">
+              <input type="radio" name="nupSize" value="a4l"><span>A4横</span>
+            </label>
+          </div>
+        </div>
+        <div class="cmp-options-row">
+          <label class="heading" for="nupMarginSlider">余白</label>
+          <input type="range" id="nupMarginSlider" class="quality-slider" min="0" max="24" value="6" step="2">
+          <span id="nupMarginVal" class="quality-value">6pt</span>
+        </div>
+      </div>
+
+      <p id="nupStatus" style="display:none"></p>
+
+      <div id="nupPreviewGrid"></div>
+
+      <div class="actions" id="nupActions" style="display:none">
+        <button id="nupBtn" disabled>PDFを生成する</button>
+        <button id="nupClearBtn" disabled>すべて削除</button>
+      </div>
+
+      <div id="nupProgress" style="display:none">
+        <p class="progress-label" id="nupProgressLabel">処理中...</p>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar" id="nupProgressBar"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div id="toast"></div>
-  <div id="build-time">built 2026-07-09 19:30 JST</div>
+  <div id="build-time">built 2026-07-21 JST</div>
 
   <script>
     const { jsPDF } = window.jspdf;
@@ -461,25 +693,30 @@
 
     const tabConvert    = document.getElementById('tabConvert');
     const tabOrganize   = document.getElementById('tabOrganize');
+    const tabCompress   = document.getElementById('tabCompress');
+    const tabNup        = document.getElementById('tabNup');
     const convertPanel  = document.getElementById('convertPanel');
     const organizePanel = document.getElementById('organizePanel');
+    const compressPanel = document.getElementById('compressPanel');
+    const nupPanel      = document.getElementById('nupPanel');
     const subtitle      = document.getElementById('subtitle');
 
-    tabConvert.addEventListener('click', () => {
-      tabConvert.classList.add('active');
-      tabOrganize.classList.remove('active');
-      convertPanel.style.display = '';
-      organizePanel.style.display = 'none';
-      subtitle.textContent = 'SVG・PNG・JPG・PDFをドラッグして変換';
-    });
+    function switchTab(activeTab, activePanel, subtitleText) {
+      [tabConvert, tabOrganize, tabCompress, tabNup].forEach(t => t.classList.remove('active'));
+      [convertPanel, organizePanel, compressPanel, nupPanel].forEach(p => { p.style.display = 'none'; });
+      activeTab.classList.add('active');
+      activePanel.style.display = '';
+      subtitle.textContent = subtitleText;
+    }
 
-    tabOrganize.addEventListener('click', () => {
-      tabOrganize.classList.add('active');
-      tabConvert.classList.remove('active');
-      organizePanel.style.display = '';
-      convertPanel.style.display = 'none';
-      subtitle.textContent = 'PDFのページを結合・分割・回転・並び替えできます';
-    });
+    tabConvert.addEventListener('click', () =>
+      switchTab(tabConvert, convertPanel, 'SVG・PNG・JPG・PDFをドラッグして変換'));
+    tabOrganize.addEventListener('click', () =>
+      switchTab(tabOrganize, organizePanel, 'PDFのページを結合・分割・回転・並び替えできます'));
+    tabCompress.addEventListener('click', () =>
+      switchTab(tabCompress, compressPanel, 'PNG・JPGをドラッグして圧縮'));
+    tabNup.addEventListener('click', () =>
+      switchTab(tabNup, nupPanel, '4ページを1枚にまとめてPDF出力できます'));
 
     // ═══════════════════════════════════════════════════════════════
     // CONVERT MODE
@@ -1294,6 +1531,410 @@
       orgProgress.style.display = 'none';
       orgRender();
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    // COMPRESS MODE
+    // ═══════════════════════════════════════════════════════════════
+
+    let cmpFiles = [];
+    let cmpIdCounter = 0;
+    let cmpFormat = 'jpg';
+
+    const cmpDropzone      = document.getElementById('cmpDropzone');
+    const cmpFileInput     = document.getElementById('cmpFileInput');
+    const cmpSelectLink    = document.getElementById('cmpSelectLink');
+    const cmpOptions       = document.getElementById('cmpOptions');
+    const cmpQuality       = document.getElementById('cmpQuality');
+    const cmpQualityVal    = document.getElementById('cmpQualityVal');
+    const cmpFileList      = document.getElementById('cmpFileList');
+    const cmpBtn           = document.getElementById('cmpBtn');
+    const cmpClearBtn      = document.getElementById('cmpClearBtn');
+    const cmpProgress      = document.getElementById('cmpProgress');
+    const cmpProgressBar   = document.getElementById('cmpProgressBar');
+    const cmpProgressLabel = document.getElementById('cmpProgressLabel');
+
+    cmpQuality.addEventListener('input', () => {
+      cmpQualityVal.textContent = cmpQuality.value + '%';
+      cmpFiles.forEach(f => { delete f.compressedSize; });
+      cmpRender();
+    });
+
+    document.querySelectorAll('#cmpFormatGroup label').forEach(lbl => {
+      lbl.addEventListener('click', () => {
+        cmpFormat = lbl.dataset.fmt;
+        document.querySelectorAll('#cmpFormatGroup label').forEach(el => el.classList.remove('selected'));
+        lbl.classList.add('selected');
+        cmpFiles.forEach(f => { delete f.compressedSize; });
+        cmpRender();
+      });
+    });
+
+    async function cmpAddFiles(rawFiles) {
+      let skipped = 0;
+      for (const f of rawFiles) {
+        const t = getFileType(f);
+        if (t !== 'png' && t !== 'jpg') { skipped++; continue; }
+        const dataUrl = await new Promise(resolve => {
+          const r = new FileReader();
+          r.onload = e => resolve(e.target.result);
+          r.readAsDataURL(f);
+        });
+        cmpFiles.push({ id: cmpIdCounter++, name: f.name, size: f.size, type: t, blobUrl: dataUrl });
+      }
+      if (skipped > 0) showToast(`${skipped}件をスキップ（PNG・JPGのみ対応）`);
+      cmpRender();
+    }
+
+    function cmpRender() {
+      const hasFiles = cmpFiles.length > 0;
+      cmpOptions.style.display = hasFiles ? '' : 'none';
+      cmpFileList.innerHTML = '';
+
+      cmpFiles.forEach(file => {
+        const item = document.createElement('div');
+        item.className = 'file-item';
+
+        let sizeHtml;
+        if (file.compressedSize !== undefined) {
+          const pct = Math.round((1 - file.compressedSize / file.size) * 100);
+          const color = pct >= 0 ? '#34c759' : '#ff9500';
+          const sign  = pct >= 0 ? '−' : '+';
+          sizeHtml = `<div class="file-size">${formatSize(file.size)} → <strong style="color:${color}">${formatSize(file.compressedSize)}</strong> <span style="color:${color}">(${sign}${Math.abs(pct)}%)</span></div>`;
+        } else {
+          sizeHtml = `<div class="file-size">${formatSize(file.size)}</div>`;
+        }
+
+        item.innerHTML = `
+          <div class="file-thumb"><img src="${file.blobUrl}" alt=""></div>
+          <div class="file-info">
+            <div class="file-name">${escHtml(file.name)}</div>
+            ${sizeHtml}
+          </div>
+          <span class="type-badge ${file.type}">${file.type.toUpperCase()}</span>
+          <button class="remove-btn" title="削除">×</button>
+        `;
+        item.querySelector('.remove-btn').addEventListener('click', () => {
+          cmpFiles = cmpFiles.filter(f => f.id !== file.id);
+          cmpRender();
+        });
+        cmpFileList.appendChild(item);
+      });
+
+      cmpBtn.disabled = !hasFiles;
+      cmpClearBtn.disabled = !hasFiles;
+    }
+
+    cmpBtn.addEventListener('click', async () => {
+      if (!cmpFiles.length) return;
+      cmpBtn.disabled = true; cmpClearBtn.disabled = true;
+      cmpProgress.style.display = 'block'; cmpProgressBar.style.width = '0%';
+
+      try {
+        const mime    = cmpFormat === 'webp' ? 'image/webp' : 'image/jpeg';
+        const ext     = cmpFormat === 'webp' ? 'webp' : 'jpg';
+        const quality = parseInt(cmpQuality.value) / 100;
+        const results = [];
+
+        for (let i = 0; i < cmpFiles.length; i++) {
+          const file = cmpFiles[i];
+          cmpProgressLabel.textContent = `圧縮中... ${i + 1} / ${cmpFiles.length}`;
+          cmpProgressBar.style.width = `${(i / cmpFiles.length) * 100}%`;
+
+          const canvas = await imageUrlToCanvas(file.blobUrl, mime);
+          const blob   = await canvasToBlob(canvas, mime, quality);
+          canvas.width = 0; canvas.height = 0;
+
+          file.compressedSize = blob.size;
+          const baseName = file.name.replace(/\.[^.]+$/, '');
+          results.push({ name: `${baseName}.${ext}`, blob });
+        }
+
+        cmpProgressBar.style.width = '100%';
+        cmpProgressLabel.textContent = '完了！';
+        cmpRender();
+
+        if (results.length === 1) {
+          downloadBlob(results[0].blob, results[0].name);
+        } else {
+          cmpProgressLabel.textContent = 'ZIPを作成中...';
+          const zip = new JSZip();
+          results.forEach(r => zip.file(r.name, r.blob));
+          const zipBlob = await zip.generateAsync({ type: 'blob' });
+          downloadBlob(zipBlob, `compressed-${dateSuffix()}.zip`);
+        }
+
+        showToast('圧縮完了しました');
+        setTimeout(() => { cmpProgress.style.display = 'none'; cmpProgressBar.style.width = '0%'; }, 1500);
+
+      } catch (err) {
+        cmpProgressLabel.textContent = 'エラー: ' + err.message;
+        console.error(err);
+      } finally {
+        cmpBtn.disabled = cmpFiles.length === 0;
+        cmpClearBtn.disabled = cmpFiles.length === 0;
+      }
+    });
+
+    cmpClearBtn.addEventListener('click', () => { cmpFiles = []; cmpRender(); });
+
+    cmpDropzone.addEventListener('dragover', e => { e.preventDefault(); cmpDropzone.classList.add('hover'); });
+    cmpDropzone.addEventListener('dragleave', () => cmpDropzone.classList.remove('hover'));
+    cmpDropzone.addEventListener('drop', async e => {
+      e.preventDefault(); cmpDropzone.classList.remove('hover');
+      await cmpAddFiles([...e.dataTransfer.files]);
+    });
+    cmpDropzone.addEventListener('click', e => {
+      if (e.target === cmpSelectLink || cmpSelectLink.contains(e.target)) return;
+      cmpFileInput.click();
+    });
+    cmpSelectLink.addEventListener('click', e => { e.stopPropagation(); cmpFileInput.click(); });
+    cmpFileInput.addEventListener('change', async () => {
+      await cmpAddFiles([...cmpFileInput.files]); cmpFileInput.value = '';
+    });
+
+    // ═══════════════════════════════════════════════════════════════
+    // 4IN1 MODE
+    // ═══════════════════════════════════════════════════════════════
+
+    const NUP_SIZES = {
+      a4:  { w: 595.28, h: 841.89 },
+      a4l: { w: 841.89, h: 595.28 },
+    };
+
+    let nupPages      = [];
+    let nupIdCounter  = 0;
+    let nupOutputSize = 'a4';
+    let nupMarginPt   = 6;
+
+    const nupDropzone      = document.getElementById('nupDropzone');
+    const nupFileInput     = document.getElementById('nupFileInput');
+    const nupSelectLink    = document.getElementById('nupSelectLink');
+    const nupOptionsEl     = document.getElementById('nupOptions');
+    const nupStatusEl      = document.getElementById('nupStatus');
+    const nupPreviewGrid   = document.getElementById('nupPreviewGrid');
+    const nupActionsEl     = document.getElementById('nupActions');
+    const nupBtn           = document.getElementById('nupBtn');
+    const nupClearBtn      = document.getElementById('nupClearBtn');
+    const nupProgressEl    = document.getElementById('nupProgress');
+    const nupProgressBar   = document.getElementById('nupProgressBar');
+    const nupProgressLabel = document.getElementById('nupProgressLabel');
+    const nupMarginSlider  = document.getElementById('nupMarginSlider');
+    const nupMarginValEl   = document.getElementById('nupMarginVal');
+
+    nupMarginSlider.addEventListener('input', () => {
+      nupMarginPt = parseInt(nupMarginSlider.value);
+      nupMarginValEl.textContent = nupMarginPt + 'pt';
+      nupRenderPreview();
+    });
+
+    document.querySelectorAll('#nupSizeGroup label').forEach(lbl => {
+      lbl.addEventListener('click', () => {
+        nupOutputSize = lbl.dataset.size;
+        document.querySelectorAll('#nupSizeGroup label').forEach(el => el.classList.remove('selected'));
+        lbl.classList.add('selected');
+        nupRenderPreview();
+      });
+    });
+
+    async function nupLoadPdf(file) {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer.slice(0) }).promise;
+
+      for (let i = 0; i < pdfDoc.numPages; i++) {
+        const page = await pdfDoc.getPage(i + 1);
+        const vp = page.getViewport({ scale: 1 });
+        const thumbScale = 120 / Math.max(vp.width, vp.height);
+        const thumbVp = page.getViewport({ scale: thumbScale });
+        const thumbCanvas = document.createElement('canvas');
+        thumbCanvas.width  = Math.round(thumbVp.width);
+        thumbCanvas.height = Math.round(thumbVp.height);
+        await page.render({ canvasContext: thumbCanvas.getContext('2d'), viewport: thumbVp }).promise;
+        const thumbUrl = thumbCanvas.toDataURL('image/jpeg', 0.82);
+        thumbCanvas.width = 0; thumbCanvas.height = 0;
+
+        nupPages.push({ id: nupIdCounter++, arrayBuffer, srcPageIdx: i, thumbUrl,
+                        naturalW: vp.width, naturalH: vp.height });
+      }
+    }
+
+    function nupRenderPreview() {
+      nupPreviewGrid.innerHTML = '';
+      if (!nupPages.length) return;
+
+      const { w: pageW, h: pageH } = NUP_SIZES[nupOutputSize];
+      const numGroups = Math.ceil(nupPages.length / 4);
+
+      for (let gi = 0; gi < numGroups; gi++) {
+        const group = nupPages.slice(gi * 4, gi * 4 + 4);
+        const card = document.createElement('div');
+        card.className = 'nup-output-card';
+
+        const grid = document.createElement('div');
+        grid.className = 'nup-2x2-grid';
+        grid.style.aspectRatio = `${pageW} / ${pageH}`;
+
+        for (let ci = 0; ci < 4; ci++) {
+          const cell = document.createElement('div');
+          cell.className = 'nup-cell' + (ci >= group.length ? ' empty' : '');
+          if (ci < group.length) {
+            const img = document.createElement('img');
+            img.src = group[ci].thumbUrl;
+            img.alt = '';
+            cell.appendChild(img);
+          }
+          grid.appendChild(cell);
+        }
+
+        const lbl = document.createElement('div');
+        lbl.className = 'nup-page-label';
+        lbl.textContent = `出力 P.${gi + 1}`;
+
+        card.appendChild(grid);
+        card.appendChild(lbl);
+        nupPreviewGrid.appendChild(card);
+      }
+
+      nupStatusEl.style.display = '';
+      nupStatusEl.textContent = `${nupPages.length} ページ → ${numGroups} ページ（4ページ/枚）`;
+      nupOptionsEl.style.display = '';
+      nupActionsEl.style.display = '';
+      nupBtn.disabled = false;
+      nupClearBtn.disabled = false;
+    }
+
+    async function nupAddFiles(rawFiles) {
+      const pdfs = rawFiles.filter(f => {
+        const ext = f.name.split('.').pop().toLowerCase();
+        return ext === 'pdf' || f.type === 'application/pdf';
+      });
+      if (!pdfs.length) { showToast('PDFファイルのみ追加できます'); return; }
+
+      nupProgressEl.style.display = 'block';
+      nupProgressLabel.textContent = '読み込み中...';
+      nupProgressBar.style.width = '0%';
+
+      for (let fi = 0; fi < pdfs.length; fi++) {
+        nupProgressLabel.textContent = `${pdfs[fi].name} を読み込み中...`;
+        await nupLoadPdf(pdfs[fi]);
+        nupProgressBar.style.width = `${((fi + 1) / pdfs.length) * 100}%`;
+      }
+
+      nupProgressEl.style.display = 'none';
+      nupRenderPreview();
+    }
+
+    nupDropzone.addEventListener('dragover', e => { e.preventDefault(); nupDropzone.classList.add('hover'); });
+    nupDropzone.addEventListener('dragleave', () => nupDropzone.classList.remove('hover'));
+    nupDropzone.addEventListener('drop', async e => {
+      e.preventDefault(); nupDropzone.classList.remove('hover');
+      await nupAddFiles([...e.dataTransfer.files]);
+    });
+    nupDropzone.addEventListener('click', e => {
+      if (e.target === nupSelectLink || nupSelectLink.contains(e.target)) return;
+      nupFileInput.click();
+    });
+    nupSelectLink.addEventListener('click', e => { e.stopPropagation(); nupFileInput.click(); });
+    nupFileInput.addEventListener('change', async () => {
+      await nupAddFiles([...nupFileInput.files]); nupFileInput.value = '';
+    });
+
+    nupClearBtn.addEventListener('click', () => {
+      nupPages = [];
+      nupPreviewGrid.innerHTML = '';
+      nupOptionsEl.style.display = 'none';
+      nupStatusEl.style.display = 'none';
+      nupActionsEl.style.display = 'none';
+      nupBtn.disabled = true;
+      nupClearBtn.disabled = true;
+    });
+
+    nupBtn.addEventListener('click', async () => {
+      if (!nupPages.length) return;
+      nupBtn.disabled = true; nupClearBtn.disabled = true;
+      nupProgressEl.style.display = 'block'; nupProgressBar.style.width = '0%';
+
+      try {
+        const { w: outW, h: outH } = NUP_SIZES[nupOutputSize];
+        const m = nupMarginPt;
+        const cellW = (outW - m * 3) / 2;
+        const cellH = (outH - m * 3) / 2;
+        const orient = outW > outH ? 'l' : 'p';
+        const pdf = new jsPDF({ orientation: orient, unit: 'pt', format: [outW, outH] });
+        const numGroups = Math.ceil(nupPages.length / 4);
+
+        // PDF.js ドキュメントを ArrayBuffer 参照でキャッシュ
+        const pdfDocCache = new Map();
+        async function getSrcDoc(buf) {
+          if (!pdfDocCache.has(buf)) {
+            pdfDocCache.set(buf, await pdfjsLib.getDocument({ data: buf.slice(0) }).promise);
+          }
+          return pdfDocCache.get(buf);
+        }
+
+        for (let gi = 0; gi < numGroups; gi++) {
+          if (gi > 0) pdf.addPage([outW, outH], orient);
+          const group = nupPages.slice(gi * 4, gi * 4 + 4);
+
+          nupProgressLabel.textContent = `生成中... ${gi + 1} / ${numGroups} ページ`;
+          nupProgressBar.style.width = `${(gi / numGroups) * 90}%`;
+
+          for (let ci = 0; ci < group.length; ci++) {
+            const np = group[ci];
+            const col = ci % 2;
+            const row = Math.floor(ci / 2);
+            const cellX = m + col * (cellW + m);
+            const cellY = m + row * (cellH + m);
+
+            const srcDoc  = await getSrcDoc(np.arrayBuffer);
+            const srcPage = await srcDoc.getPage(np.srcPageIdx + 1);
+            const vp      = srcPage.getViewport({ scale: 1 });
+
+            const scale    = Math.min(cellW / vp.width, cellH / vp.height) * 2;
+            const renderVp = srcPage.getViewport({ scale });
+            const canvas   = document.createElement('canvas');
+            canvas.width   = Math.round(renderVp.width);
+            canvas.height  = Math.round(renderVp.height);
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            await srcPage.render({ canvasContext: ctx, viewport: renderVp }).promise;
+
+            // セル内でレターボックスフィット
+            const srcAspect  = vp.width / vp.height;
+            const cellAspect = cellW / cellH;
+            let imgW, imgH, imgX, imgY;
+            if (srcAspect >= cellAspect) {
+              imgW = cellW; imgH = cellW / srcAspect;
+              imgX = cellX; imgY = cellY + (cellH - imgH) / 2;
+            } else {
+              imgH = cellH; imgW = cellH * srcAspect;
+              imgX = cellX + (cellW - imgW) / 2; imgY = cellY;
+            }
+
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+            canvas.width = 0; canvas.height = 0;
+            pdf.addImage(dataUrl, 'JPEG', imgX, imgY, imgW, imgH);
+          }
+
+          await new Promise(r => setTimeout(r, 0));
+        }
+
+        nupProgressBar.style.width = '100%';
+        nupProgressLabel.textContent = '完了！';
+        pdf.save(`4in1-${dateSuffix()}.pdf`);
+        showToast('PDFを生成しました');
+
+        setTimeout(() => {
+          nupProgressEl.style.display = 'none'; nupProgressBar.style.width = '0%';
+          nupBtn.disabled = false; nupClearBtn.disabled = false;
+        }, 1500);
+
+      } catch (err) {
+        nupProgressLabel.textContent = 'エラー: ' + err.message;
+        console.error(err);
+        nupBtn.disabled = false; nupClearBtn.disabled = false;
+      }
+    });
 
     // ── Keyboard shortcuts (organize mode) ───────────────────────
 
