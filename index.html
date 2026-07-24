@@ -575,11 +575,11 @@
 
       <div class="org-export-actions" id="orgExportActions" style="display:none">
         <div class="org-export-item">
-          <input type="text" class="org-export-name" id="orgExtractName" placeholder="ファイル名">
+          <input type="text" class="org-export-name" id="orgExtractName">
           <button class="org-btn" id="orgExtractBtn" disabled>選択を抽出</button>
         </div>
         <div class="org-export-item">
-          <input type="text" class="org-export-name" id="orgSaveName" placeholder="ファイル名">
+          <input type="text" class="org-export-name" id="orgSaveName">
           <button class="org-btn primary" id="orgSaveBtn" disabled>保存</button>
         </div>
       </div>
@@ -1421,12 +1421,12 @@
         orgStatus.textContent = `${orgPages.length} ページ中 ${orgSelected.size} 件選択`;
       }
 
-      // プレースホルダーをデフォルト名に同期
+      // 空のときだけデフォルト名を入力欄に設定
       const saveBase = orgPages[0]?.fileName || 'document';
-      orgSaveName.placeholder = `${saveBase}_organized`;
+      if (!orgSaveName.value) orgSaveName.value = `${saveBase}_organized`;
       const selFirst = orgPages.find(p => orgSelected.has(p.id));
       const extractBase = selFirst?.fileName || orgPages[0]?.fileName || 'document';
-      orgExtractName.placeholder = `${extractBase}_extracted`;
+      if (!orgExtractName.value) orgExtractName.value = `${extractBase}_extracted`;
     }
 
     // ── Drag-to-reorder (cards) ───────────────────────────────────
@@ -1857,11 +1857,11 @@
         lbl.textContent = `出力 P.${gi + 1}`;
 
         const defaultName = group[0].fileName + '_4in1';
+        if (nupGroupCustomNames[gi] === undefined) nupGroupCustomNames[gi] = defaultName;
         const inp = document.createElement('input');
         inp.type = 'text';
         inp.className = 'nup-name-input';
-        inp.placeholder = defaultName;
-        inp.value = nupGroupCustomNames[gi] || '';
+        inp.value = nupGroupCustomNames[gi];
         inp.addEventListener('input', () => { nupGroupCustomNames[gi] = inp.value; });
 
         card.appendChild(grid);
