@@ -272,6 +272,17 @@
     .org-btn.danger:hover:not(:disabled) { background: #fff0ef; }
     .org-sep { width: 1px; height: 22px; background: #e5e5ea; flex-shrink: 0; margin: 0 2px; }
     #orgStatus { font-size: 0.82rem; color: #6e6e73; flex: 1; min-width: 60px; }
+    .org-export-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+    .org-export-item { display: flex; gap: 8px; align-items: center; }
+    .org-export-item .org-btn { white-space: nowrap; }
+    .org-export-name {
+      flex: 1; padding: 7px 11px;
+      border: 1.5px solid #d1d1d6; border-radius: 8px;
+      font-size: 0.83rem; color: #3a3a3c; outline: none;
+      background: #fff; transition: border-color 0.15s;
+    }
+    .org-export-name::placeholder { color: #aeaeb2; }
+    .org-export-name:focus { border-color: #0071e3; }
 
     #orgGrid {
       display: grid;
@@ -454,6 +465,17 @@
       font-size: 0.72rem; color: #6e6e73;
       text-align: center; margin-top: 6px; font-weight: 500;
     }
+    .nup-name-input {
+      width: 100%; box-sizing: border-box;
+      margin-top: 4px; padding: 3px 7px;
+      font-size: 0.72rem; color: #3a3a3c;
+      border: 1px solid transparent; border-radius: 6px;
+      background: transparent; text-align: center;
+      outline: none; transition: border-color 0.15s, background 0.15s;
+    }
+    .nup-name-input::placeholder { color: #aeaeb2; }
+    .nup-name-input:hover { border-color: #d1d1d6; background: #f5f5f7; }
+    .nup-name-input:focus { border-color: #0071e3; background: #fff; }
 
     #nupBtn {
       flex: 1; padding: 14px;
@@ -542,14 +564,24 @@
         <button class="org-btn" id="orgRotateLeftBtn" disabled>↺ 左回転</button>
         <button class="org-btn" id="orgRotateRightBtn" disabled>↻ 右回転</button>
         <button class="org-btn danger" id="orgDeleteBtn" disabled>削除</button>
+        <button class="org-btn" id="orgDeselectBtn" disabled>選択解除</button>
         <div class="org-sep"></div>
         <span id="orgStatus"></span>
-        <button class="org-btn" id="orgExtractBtn" disabled>選択を抽出</button>
-        <button class="org-btn primary" id="orgSaveBtn" disabled>保存</button>
       </div>
 
       <div id="orgGrid">
         <div class="org-empty">PDFをドロップしてページを追加</div>
+      </div>
+
+      <div class="org-export-actions" id="orgExportActions" style="display:none">
+        <div class="org-export-item">
+          <input type="text" class="org-export-name" id="orgExtractName" placeholder="ファイル名">
+          <button class="org-btn" id="orgExtractBtn" disabled>選択を抽出</button>
+        </div>
+        <div class="org-export-item">
+          <input type="text" class="org-export-name" id="orgSaveName" placeholder="ファイル名">
+          <button class="org-btn primary" id="orgSaveBtn" disabled>保存</button>
+        </div>
       </div>
 
       <div class="org-progress" id="orgProgress" style="display:none">
@@ -650,7 +682,7 @@
   </div>
 
   <div id="toast"></div>
-  <div id="build-time">built 2026-07-21 JST</div>
+  <div id="build-time">built 2026-07-24 JST</div>
 
   <script>
     const { jsPDF } = window.jspdf;
@@ -1264,8 +1296,12 @@
     const orgRotateLeftBtn = document.getElementById('orgRotateLeftBtn');
     const orgRotateRightBtn= document.getElementById('orgRotateRightBtn');
     const orgDeleteBtn     = document.getElementById('orgDeleteBtn');
+    const orgDeselectBtn   = document.getElementById('orgDeselectBtn');
     const orgExtractBtn    = document.getElementById('orgExtractBtn');
+    const orgExtractName   = document.getElementById('orgExtractName');
     const orgSaveBtn       = document.getElementById('orgSaveBtn');
+    const orgSaveName      = document.getElementById('orgSaveName');
+    const orgExportActions = document.getElementById('orgExportActions');
     const orgStatus        = document.getElementById('orgStatus');
     const orgProgress      = document.getElementById('orgProgress');
     const orgProgressBar   = document.getElementById('orgProgressBar');
@@ -1273,7 +1309,7 @@
 
     // ── Load PDF pages ────────────────────────────────────────────
 
-    async function orgLoadPdf(file) {
+    async function orgLoadPdf(file, onPageDone) {
       const arrayBuffer = await file.arrayBuffer();
       const srcBytes = new Uint8Array(arrayBuffer);
       const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer.slice(0) }).promise;
@@ -1299,6 +1335,7 @@
           fileName: file.name.replace(/\.[^.]+$/, ''),
           label: `${file.name}  P.${i + 1}`,
         });
+        if (onPageDone) onPageDone(i + 1, pdfDoc.numPages);
       }
     }
 
@@ -1313,6 +1350,7 @@
         empty.textContent = 'PDFをドロップしてページを追加';
         orgGrid.appendChild(empty);
         orgSaveBtn.disabled = true;
+        orgExportActions.style.display = 'none';
         orgUpdateToolbar();
         return;
       }
@@ -1363,6 +1401,7 @@
       });
 
       orgSaveBtn.disabled = false;
+      orgExportActions.style.display = '';
       orgUpdateToolbar();
     }
 
@@ -1371,6 +1410,7 @@
       orgRotateLeftBtn.disabled  = !hasSel;
       orgRotateRightBtn.disabled = !hasSel;
       orgDeleteBtn.disabled      = !hasSel;
+      orgDeselectBtn.disabled    = !hasSel;
       orgExtractBtn.disabled     = !hasSel;
 
       if (orgPages.length === 0) {
@@ -1380,6 +1420,13 @@
       } else {
         orgStatus.textContent = `${orgPages.length} ページ中 ${orgSelected.size} 件選択`;
       }
+
+      // プレースホルダーをデフォルト名に同期
+      const saveBase = orgPages[0]?.fileName || 'document';
+      orgSaveName.placeholder = `${saveBase}_organized`;
+      const selFirst = orgPages.find(p => orgSelected.has(p.id));
+      const extractBase = selFirst?.fileName || orgPages[0]?.fileName || 'document';
+      orgExtractName.placeholder = `${extractBase}_extracted`;
     }
 
     // ── Drag-to-reorder (cards) ───────────────────────────────────
@@ -1436,15 +1483,22 @@
       orgRender();
     });
 
+    orgDeselectBtn.addEventListener('click', () => {
+      orgSelected.clear();
+      orgRender();
+    });
+
     orgExtractBtn.addEventListener('click', async () => {
       const pagesToExport = orgPages.filter(p => orgSelected.has(p.id));
       const extractBase = pagesToExport[0]?.fileName || orgPages[0]?.fileName || 'document';
-      await orgRunExport(pagesToExport, `${extractBase}_extracted.pdf`);
+      const customName = orgExtractName.value.trim();
+      await orgRunExport(pagesToExport, (customName || `${extractBase}_extracted`) + '.pdf');
     });
 
     orgSaveBtn.addEventListener('click', async () => {
       const saveBase = orgPages[0]?.fileName || 'document';
-      await orgRunExport(orgPages, `${saveBase}_organized.pdf`);
+      const customName = orgSaveName.value.trim();
+      await orgRunExport(orgPages, (customName || `${saveBase}_organized`) + '.pdf');
     });
 
     async function orgRunExport(pages, filename) {
@@ -1528,9 +1582,13 @@
       orgProgressLabel.textContent = '読み込み中...';
       orgProgressBar.style.width = '0%';
 
-      for (const f of pdfs) {
+      for (let fi = 0; fi < pdfs.length; fi++) {
+        const f = pdfs[fi];
         orgProgressLabel.textContent = `${f.name} を読み込み中...`;
-        await orgLoadPdf(f);
+        await orgLoadPdf(f, (pg, total) => {
+          orgProgressLabel.textContent = `${f.name}（${pg} / ${total} ページ）`;
+          orgProgressBar.style.width = `${((fi + pg / total) / pdfs.length) * 100}%`;
+        });
       }
 
       orgProgress.style.display = 'none';
@@ -1707,7 +1765,8 @@
       a4l: { w: 841.89, h: 595.28 },
     };
 
-    let nupPages      = [];
+    let nupPages           = [];
+    let nupGroupCustomNames = [];
     let nupIdCounter  = 0;
     let nupOutputSize = 'a4';
     let nupMarginPt   = 6;
@@ -1742,7 +1801,7 @@
       });
     });
 
-    async function nupLoadPdf(file) {
+    async function nupLoadPdf(file, onPageDone) {
       const arrayBuffer = await file.arrayBuffer();
       const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer.slice(0) }).promise;
 
@@ -1761,6 +1820,7 @@
         nupPages.push({ id: nupIdCounter++, arrayBuffer, srcPageIdx: i, thumbUrl,
                         naturalW: vp.width, naturalH: vp.height,
                         fileName: file.name.replace(/\.[^.]+$/, '') });
+        if (onPageDone) onPageDone(i + 1, pdfDoc.numPages);
       }
     }
 
@@ -1796,8 +1856,17 @@
         lbl.className = 'nup-page-label';
         lbl.textContent = `出力 P.${gi + 1}`;
 
+        const defaultName = group[0].fileName + '_4in1';
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.className = 'nup-name-input';
+        inp.placeholder = defaultName;
+        inp.value = nupGroupCustomNames[gi] || '';
+        inp.addEventListener('input', () => { nupGroupCustomNames[gi] = inp.value; });
+
         card.appendChild(grid);
         card.appendChild(lbl);
+        card.appendChild(inp);
         nupPreviewGrid.appendChild(card);
       }
 
@@ -1821,9 +1890,12 @@
       nupProgressBar.style.width = '0%';
 
       for (let fi = 0; fi < pdfs.length; fi++) {
-        nupProgressLabel.textContent = `${pdfs[fi].name} を読み込み中...`;
-        await nupLoadPdf(pdfs[fi]);
-        nupProgressBar.style.width = `${((fi + 1) / pdfs.length) * 100}%`;
+        const f = pdfs[fi];
+        nupProgressLabel.textContent = `${f.name} を読み込み中...`;
+        await nupLoadPdf(f, (pg, total) => {
+          nupProgressLabel.textContent = `${f.name}（${pg} / ${total} ページ）`;
+          nupProgressBar.style.width = `${((fi + pg / total) / pdfs.length) * 100}%`;
+        });
       }
 
       nupProgressEl.style.display = 'none';
@@ -1847,6 +1919,7 @@
 
     nupClearBtn.addEventListener('click', () => {
       nupPages = [];
+      nupGroupCustomNames = [];
       nupPreviewGrid.innerHTML = '';
       nupOptionsEl.style.display = 'none';
       nupStatusEl.style.display = 'none';
@@ -1866,7 +1939,6 @@
         const cellW = (outW - m * 3) / 2;
         const cellH = (outH - m * 3) / 2;
         const orient = outW > outH ? 'l' : 'p';
-        const pdf = new jsPDF({ orientation: orient, unit: 'pt', format: [outW, outH] });
         const numGroups = Math.ceil(nupPages.length / 4);
 
         // PDF.js ドキュメントを ArrayBuffer 参照でキャッシュ
@@ -1879,10 +1951,10 @@
         }
 
         for (let gi = 0; gi < numGroups; gi++) {
-          if (gi > 0) pdf.addPage([outW, outH], orient);
           const group = nupPages.slice(gi * 4, gi * 4 + 4);
+          const pdf = new jsPDF({ orientation: orient, unit: 'pt', format: [outW, outH] });
 
-          nupProgressLabel.textContent = `生成中... ${gi + 1} / ${numGroups} ページ`;
+          nupProgressLabel.textContent = `生成中... ${gi + 1} / ${numGroups}`;
           nupProgressBar.style.width = `${(gi / numGroups) * 90}%`;
 
           for (let ci = 0; ci < group.length; ci++) {
@@ -1896,7 +1968,7 @@
             const srcPage = await srcDoc.getPage(np.srcPageIdx + 1);
             const vp      = srcPage.getViewport({ scale: 1 });
 
-            const scale    = Math.min(cellW / vp.width, cellH / vp.height) * 2;
+            const scale    = Math.min(cellW / vp.width, cellH / vp.height) * 3;
             const renderVp = srcPage.getViewport({ scale });
             const canvas   = document.createElement('canvas');
             canvas.width   = Math.round(renderVp.width);
@@ -1918,18 +1990,20 @@
               imgX = cellX + (cellW - imgW) / 2; imgY = cellY;
             }
 
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
             canvas.width = 0; canvas.height = 0;
             pdf.addImage(dataUrl, 'JPEG', imgX, imgY, imgW, imgH);
           }
 
+          const customName = (nupGroupCustomNames[gi] || '').trim();
+          const fileName = (customName || group[0].fileName + '_4in1') + '.pdf';
+          pdf.save(fileName);
           await new Promise(r => setTimeout(r, 0));
         }
 
         nupProgressBar.style.width = '100%';
         nupProgressLabel.textContent = '完了！';
-        pdf.save(`${nupPages[0].fileName}_4in1.pdf`);
-        showToast('PDFを生成しました');
+        showToast(`${numGroups} 件のPDFを生成しました`);
 
         setTimeout(() => {
           nupProgressEl.style.display = 'none'; nupProgressBar.style.width = '0%';
