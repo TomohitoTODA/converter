@@ -607,12 +607,12 @@
       <div id="cmpDropzone">
         <div class="icon">🗜️</div>
         <p class="main-text"><strong id="cmpSelectLink">ファイルを選択</strong>　またはここにドロップ</p>
-        <p class="sub-text">PNG・JPG に対応</p>
+        <p class="sub-text">PNG・JPG・PDF に対応</p>
       </div>
-      <input type="file" id="cmpFileInput" accept=".png,.jpg,.jpeg,image/png,image/jpeg" multiple>
+      <input type="file" id="cmpFileInput" accept=".png,.jpg,.jpeg,.pdf,image/png,image/jpeg,application/pdf" multiple>
 
       <div id="cmpOptions" style="display:none">
-        <div class="cmp-options-row">
+        <div class="cmp-options-row" id="cmpFormatRow">
           <label class="heading">出力形式</label>
           <div class="radio-group" id="cmpFormatGroup">
             <label class="selected" data-fmt="jpg">
@@ -1628,6 +1628,7 @@
     const cmpFileInput     = document.getElementById('cmpFileInput');
     const cmpSelectLink    = document.getElementById('cmpSelectLink');
     const cmpOptions       = document.getElementById('cmpOptions');
+    const cmpFormatRow     = document.getElementById('cmpFormatRow');
     const cmpQuality       = document.getElementById('cmpQuality');
     const cmpQualityVal    = document.getElementById('cmpQualityVal');
     const cmpFileList      = document.getElementById('cmpFileList');
@@ -1657,21 +1658,38 @@
       let skipped = 0;
       for (const f of rawFiles) {
         const t = getFileType(f);
-        if (t !== 'png' && t !== 'jpg') { skipped++; continue; }
-        const dataUrl = await new Promise(resolve => {
-          const r = new FileReader();
-          r.onload = e => resolve(e.target.result);
-          r.readAsDataURL(f);
-        });
-        cmpFiles.push({ id: cmpIdCounter++, name: f.name, size: f.size, type: t, blobUrl: dataUrl });
+        if (t !== 'png' && t !== 'jpg' && t !== 'pdf') { skipped++; continue; }
+
+        if (t === 'pdf') {
+          const arrayBuffer = await f.arrayBuffer();
+          const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer.slice(0) }).promise;
+          const page = await pdfDoc.getPage(1);
+          const vp = page.getViewport({ scale: 1 });
+          const thumbScale = 120 / Math.max(vp.width, vp.height);
+          const thumbVp = page.getViewport({ scale: thumbScale });
+          const tc = document.createElement('canvas');
+          tc.width = Math.round(thumbVp.width); tc.height = Math.round(thumbVp.height);
+          await page.render({ canvasContext: tc.getContext('2d'), viewport: thumbVp }).promise;
+          const thumbUrl = tc.toDataURL('image/jpeg', 0.8);
+          tc.width = 0; tc.height = 0;
+          cmpFiles.push({ id: cmpIdCounter++, name: f.name, size: f.size, type: 'pdf',
+                          blobUrl: thumbUrl, arrayBuffer, numPages: pdfDoc.numPages });
+        } else {
+          const dataUrl = await new Promise(resolve => {
+            const r = new FileReader(); r.onload = e => resolve(e.target.result); r.readAsDataURL(f);
+          });
+          cmpFiles.push({ id: cmpIdCounter++, name: f.name, size: f.size, type: t, blobUrl: dataUrl });
+        }
       }
-      if (skipped > 0) showToast(`${skipped}件をスキップ（PNG・JPGのみ対応）`);
+      if (skipped > 0) showToast(`${skipped}件をスキップ（PNG・JPG・PDFのみ対応）`);
       cmpRender();
     }
 
     function cmpRender() {
       const hasFiles = cmpFiles.length > 0;
       cmpOptions.style.display = hasFiles ? '' : 'none';
+      const allPdf = hasFiles && cmpFiles.every(f => f.type === 'pdf');
+      cmpFormatRow.style.display = allPdf ? 'none' : '';
       cmpFileList.innerHTML = '';
 
       cmpFiles.forEach(file => {
@@ -1722,15 +1740,44 @@
         for (let i = 0; i < cmpFiles.length; i++) {
           const file = cmpFiles[i];
           cmpProgressLabel.textContent = `圧縮中... ${i + 1} / ${cmpFiles.length}`;
-          cmpProgressBar.style.width = `${(i / cmpFiles.length) * 100}%`;
-
-          const canvas = await imageUrlToCanvas(file.blobUrl, mime);
-          const blob   = await canvasToBlob(canvas, mime, quality);
-          canvas.width = 0; canvas.height = 0;
-
-          file.compressedSize = blob.size;
+          cmpProgressBar.style.width = `${(i / cmpFiles.length) * 90}%`;
           const baseName = file.name.replace(/\.[^.]+$/, '');
-          results.push({ name: `${baseName}.${ext}`, blob });
+
+          if (file.type === 'pdf') {
+            const renderScale = quality >= 0.7 ? 2 : quality >= 0.4 ? 1.5 : 1;
+            const srcDoc = await pdfjsLib.getDocument({ data: file.arrayBuffer.slice(0) }).promise;
+            const firstPg = await srcDoc.getPage(1);
+            const firstVp = firstPg.getViewport({ scale: 1 });
+            const orient = firstVp.width > firstVp.height ? 'l' : 'p';
+            const outPdf = new jsPDF({ orientation: orient, unit: 'pt', format: [firstVp.width, firstVp.height] });
+
+            for (let pi = 0; pi < srcDoc.numPages; pi++) {
+              cmpProgressLabel.textContent = `${file.name}（${pi + 1} / ${srcDoc.numPages} ページ）`;
+              const pg = await srcDoc.getPage(pi + 1);
+              const vp = pg.getViewport({ scale: 1 });
+              if (pi > 0) outPdf.addPage([vp.width, vp.height], vp.width > vp.height ? 'l' : 'p');
+              const rVp = pg.getViewport({ scale: renderScale });
+              const canvas = document.createElement('canvas');
+              canvas.width = Math.round(rVp.width); canvas.height = Math.round(rVp.height);
+              const ctx = canvas.getContext('2d');
+              ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+              await pg.render({ canvasContext: ctx, viewport: rVp }).promise;
+              const dataUrl = canvas.toDataURL('image/jpeg', quality);
+              canvas.width = 0; canvas.height = 0;
+              outPdf.addImage(dataUrl, 'JPEG', 0, 0, vp.width, vp.height);
+            }
+
+            const pdfBytes = outPdf.output('arraybuffer');
+            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+            file.compressedSize = blob.size;
+            results.push({ name: `${baseName}_compressed.pdf`, blob });
+          } else {
+            const canvas = await imageUrlToCanvas(file.blobUrl, mime);
+            const blob   = await canvasToBlob(canvas, mime, quality);
+            canvas.width = 0; canvas.height = 0;
+            file.compressedSize = blob.size;
+            results.push({ name: `${baseName}.${ext}`, blob });
+          }
         }
 
         cmpProgressBar.style.width = '100%';
