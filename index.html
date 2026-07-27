@@ -445,6 +445,16 @@
       border-radius: 6px;
       overflow: hidden;
     }
+    .nup-2x4-grid {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr 1fr 1fr;
+      gap: 2px;
+      background: #e5e5ea;
+      border-radius: 6px;
+      overflow: hidden;
+    }
 
     .nup-cell {
       background: #f5f5f7;
@@ -645,6 +655,17 @@
       <input type="file" id="nupFileInput" accept=".pdf,application/pdf" multiple>
 
       <div id="nupOptions" style="display:none">
+        <div class="cmp-options-row">
+          <label class="heading">レイアウト</label>
+          <div class="radio-group" id="nupLayoutGroup">
+            <label class="selected" data-layout="4">
+              <input type="radio" name="nupLayout" value="4" checked><span>4枚/ページ</span>
+            </label>
+            <label data-layout="8">
+              <input type="radio" name="nupLayout" value="8"><span>8枚/ページ</span>
+            </label>
+          </div>
+        </div>
         <div class="cmp-options-row">
           <label class="heading">出力サイズ</label>
           <div class="radio-group" id="nupSizeGroup">
@@ -1770,6 +1791,7 @@
     let nupIdCounter  = 0;
     let nupOutputSize = 'a4';
     let nupMarginPt   = 6;
+    let nupLayout     = 4; // 4 or 8
 
     const nupDropzone      = document.getElementById('nupDropzone');
     const nupFileInput     = document.getElementById('nupFileInput');
@@ -1790,6 +1812,16 @@
       nupMarginPt = parseInt(nupMarginSlider.value);
       nupMarginValEl.textContent = nupMarginPt + 'pt';
       nupRenderPreview();
+    });
+
+    document.querySelectorAll('#nupLayoutGroup label').forEach(lbl => {
+      lbl.addEventListener('click', () => {
+        nupLayout = parseInt(lbl.dataset.layout);
+        nupGroupCustomNames = [];
+        document.querySelectorAll('#nupLayoutGroup label').forEach(el => el.classList.remove('selected'));
+        lbl.classList.add('selected');
+        nupRenderPreview();
+      });
     });
 
     document.querySelectorAll('#nupSizeGroup label').forEach(lbl => {
@@ -1829,18 +1861,21 @@
       if (!nupPages.length) return;
 
       const { w: pageW, h: pageH } = NUP_SIZES[nupOutputSize];
-      const numGroups = Math.ceil(nupPages.length / 4);
+      const perPage = nupLayout;
+      const numGroups = Math.ceil(nupPages.length / perPage);
+      const gridClass = perPage === 8 ? 'nup-2x4-grid' : 'nup-2x2-grid';
+      const suffix = perPage === 8 ? '_8in1' : '_4in1';
 
       for (let gi = 0; gi < numGroups; gi++) {
-        const group = nupPages.slice(gi * 4, gi * 4 + 4);
+        const group = nupPages.slice(gi * perPage, gi * perPage + perPage);
         const card = document.createElement('div');
         card.className = 'nup-output-card';
 
         const grid = document.createElement('div');
-        grid.className = 'nup-2x2-grid';
+        grid.className = gridClass;
         grid.style.aspectRatio = `${pageW} / ${pageH}`;
 
-        for (let ci = 0; ci < 4; ci++) {
+        for (let ci = 0; ci < perPage; ci++) {
           const cell = document.createElement('div');
           cell.className = 'nup-cell' + (ci >= group.length ? ' empty' : '');
           if (ci < group.length) {
@@ -1856,7 +1891,7 @@
         lbl.className = 'nup-page-label';
         lbl.textContent = `出力 P.${gi + 1}`;
 
-        const defaultName = group[0].fileName + '_4in1';
+        const defaultName = group[0].fileName + suffix;
         if (nupGroupCustomNames[gi] === undefined) nupGroupCustomNames[gi] = defaultName;
         const inp = document.createElement('input');
         inp.type = 'text';
@@ -1871,7 +1906,7 @@
       }
 
       nupStatusEl.style.display = '';
-      nupStatusEl.textContent = `${nupPages.length} ページ → ${numGroups} ページ（4ページ/枚）`;
+      nupStatusEl.textContent = `${nupPages.length} ページ → ${numGroups} ページ（${perPage}ページ/枚）`;
       nupOptionsEl.style.display = '';
       nupActionsEl.style.display = '';
       nupBtn.disabled = false;
@@ -1936,10 +1971,14 @@
       try {
         const { w: outW, h: outH } = NUP_SIZES[nupOutputSize];
         const m = nupMarginPt;
-        const cellW = (outW - m * 3) / 2;
-        const cellH = (outH - m * 3) / 2;
+        const perPage = nupLayout;
+        const cols = 2;
+        const rows = perPage / cols; // 4→2rows, 8→4rows
+        const cellW = (outW - m * (cols + 1)) / cols;
+        const cellH = (outH - m * (rows + 1)) / rows;
         const orient = outW > outH ? 'l' : 'p';
-        const numGroups = Math.ceil(nupPages.length / 4);
+        const suffix = perPage === 8 ? '_8in1' : '_4in1';
+        const numGroups = Math.ceil(nupPages.length / perPage);
 
         // PDF.js ドキュメントを ArrayBuffer 参照でキャッシュ
         const pdfDocCache = new Map();
@@ -1951,7 +1990,7 @@
         }
 
         for (let gi = 0; gi < numGroups; gi++) {
-          const group = nupPages.slice(gi * 4, gi * 4 + 4);
+          const group = nupPages.slice(gi * perPage, gi * perPage + perPage);
           const pdf = new jsPDF({ orientation: orient, unit: 'pt', format: [outW, outH] });
 
           nupProgressLabel.textContent = `生成中... ${gi + 1} / ${numGroups}`;
@@ -1959,8 +1998,8 @@
 
           for (let ci = 0; ci < group.length; ci++) {
             const np = group[ci];
-            const col = ci % 2;
-            const row = Math.floor(ci / 2);
+            const col = ci % cols;
+            const row = Math.floor(ci / cols);
             const cellX = m + col * (cellW + m);
             const cellY = m + row * (cellH + m);
 
@@ -1996,7 +2035,7 @@
           }
 
           const customName = (nupGroupCustomNames[gi] || '').trim();
-          const fileName = (customName || group[0].fileName + '_4in1') + '.pdf';
+          const fileName = (customName || group[0].fileName + suffix) + '.pdf';
           pdf.save(fileName);
           await new Promise(r => setTimeout(r, 0));
         }
