@@ -688,9 +688,14 @@
 
       <div id="nupPreviewGrid"></div>
 
-      <div class="actions" id="nupActions" style="display:none">
-        <button id="nupBtn" disabled>PDFを生成する</button>
-        <button id="nupClearBtn" disabled>すべて削除</button>
+      <div id="nupActions" style="display:none">
+        <div class="org-export-item" style="margin-bottom:10px">
+          <input type="text" id="nupOutputNameInput" class="org-export-name">
+          <button id="nupBtn" disabled>PDFを生成する</button>
+        </div>
+        <div style="display:flex;gap:12px">
+          <button id="nupClearBtn" disabled style="flex:1">すべて削除</button>
+        </div>
       </div>
 
       <div id="nupProgress" style="display:none">
@@ -1833,8 +1838,7 @@
       a4l: { w: 841.89, h: 595.28 },
     };
 
-    let nupPages           = [];
-    let nupGroupCustomNames = [];
+    let nupPages      = [];
     let nupIdCounter  = 0;
     let nupOutputSize = 'a4';
     let nupMarginPt   = 6;
@@ -1847,8 +1851,9 @@
     const nupStatusEl      = document.getElementById('nupStatus');
     const nupPreviewGrid   = document.getElementById('nupPreviewGrid');
     const nupActionsEl     = document.getElementById('nupActions');
-    const nupBtn           = document.getElementById('nupBtn');
-    const nupClearBtn      = document.getElementById('nupClearBtn');
+    const nupBtn              = document.getElementById('nupBtn');
+    const nupClearBtn         = document.getElementById('nupClearBtn');
+    const nupOutputNameInput  = document.getElementById('nupOutputNameInput');
     const nupProgressEl    = document.getElementById('nupProgress');
     const nupProgressBar   = document.getElementById('nupProgressBar');
     const nupProgressLabel = document.getElementById('nupProgressLabel');
@@ -1864,7 +1869,6 @@
     document.querySelectorAll('#nupLayoutGroup label').forEach(lbl => {
       lbl.addEventListener('click', () => {
         nupLayout = parseInt(lbl.dataset.layout);
-        nupGroupCustomNames = [];
         document.querySelectorAll('#nupLayoutGroup label').forEach(el => el.classList.remove('selected'));
         lbl.classList.add('selected');
         nupRenderPreview();
@@ -1938,17 +1942,8 @@
         lbl.className = 'nup-page-label';
         lbl.textContent = `出力 P.${gi + 1}`;
 
-        const defaultName = group[0].fileName + suffix;
-        if (nupGroupCustomNames[gi] === undefined) nupGroupCustomNames[gi] = defaultName;
-        const inp = document.createElement('input');
-        inp.type = 'text';
-        inp.className = 'nup-name-input';
-        inp.value = nupGroupCustomNames[gi];
-        inp.addEventListener('input', () => { nupGroupCustomNames[gi] = inp.value; });
-
         card.appendChild(grid);
         card.appendChild(lbl);
-        card.appendChild(inp);
         nupPreviewGrid.appendChild(card);
       }
 
@@ -1958,6 +1953,7 @@
       nupActionsEl.style.display = '';
       nupBtn.disabled = false;
       nupClearBtn.disabled = false;
+      if (!nupOutputNameInput.value) nupOutputNameInput.value = nupPages[0].fileName + suffix;
     }
 
     async function nupAddFiles(rawFiles) {
@@ -2001,7 +1997,7 @@
 
     nupClearBtn.addEventListener('click', () => {
       nupPages = [];
-      nupGroupCustomNames = [];
+      nupOutputNameInput.value = '';
       nupPreviewGrid.innerHTML = '';
       nupOptionsEl.style.display = 'none';
       nupStatusEl.style.display = 'none';
@@ -2036,11 +2032,13 @@
           return pdfDocCache.get(buf);
         }
 
+        const pdf = new jsPDF({ orientation: orient, unit: 'pt', format: [outW, outH] });
+
         for (let gi = 0; gi < numGroups; gi++) {
           const group = nupPages.slice(gi * perPage, gi * perPage + perPage);
-          const pdf = new jsPDF({ orientation: orient, unit: 'pt', format: [outW, outH] });
+          if (gi > 0) pdf.addPage([outW, outH], orient);
 
-          nupProgressLabel.textContent = `生成中... ${gi + 1} / ${numGroups}`;
+          nupProgressLabel.textContent = `生成中... ${gi + 1} / ${numGroups} ページ`;
           nupProgressBar.style.width = `${(gi / numGroups) * 90}%`;
 
           for (let ci = 0; ci < group.length; ci++) {
@@ -2081,15 +2079,14 @@
             pdf.addImage(dataUrl, 'JPEG', imgX, imgY, imgW, imgH);
           }
 
-          const customName = (nupGroupCustomNames[gi] || '').trim();
-          const fileName = (customName || group[0].fileName + suffix) + '.pdf';
-          pdf.save(fileName);
           await new Promise(r => setTimeout(r, 0));
         }
 
         nupProgressBar.style.width = '100%';
         nupProgressLabel.textContent = '完了！';
-        showToast(`${numGroups} 件のPDFを生成しました`);
+        const customName = nupOutputNameInput.value.trim();
+        pdf.save((customName || nupPages[0].fileName + suffix) + '.pdf');
+        showToast('PDFを生成しました');
 
         setTimeout(() => {
           nupProgressEl.style.display = 'none'; nupProgressBar.style.width = '0%';
